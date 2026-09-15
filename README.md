@@ -46,3 +46,7 @@ The cleaned dataset contains 500 rows, with standardized city and category value
 ## Conclusion
 
 The analysis combines SQL and Python-based data analysis to identify revenue patterns, supplier performance, and data-quality issues in the BigBasket dataset.
+
+
+## Tableau Dashboard
+- [View BigBasket Category Performance Dashboard](https://public.tableau.com/views/BigBasketCategoryDiagnostic/CategoryPerformanceDashboard)
