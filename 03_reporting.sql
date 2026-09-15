@@ -1,0 +1,61 @@
+-- 1. CASE WHEN: Product revenue tiering
+SELECT
+    p.product_name,
+    SUM(o.amount_inr) AS total_revenue,
+    CASE
+        WHEN SUM(o.amount_inr) >= 3000 THEN 'High'
+        WHEN SUM(o.amount_inr) >= 1000 THEN 'Medium'
+        ELSE 'Low'
+    END AS revenue_tier
+FROM products p
+INNER JOIN orders o
+    ON p.product_id = o.product_id
+WHERE o.status = 'Delivered'
+GROUP BY p.product_id, p.product_name;
+
+
+-- 2. Monthly revenue by category
+SELECT
+    p.category,
+    strftime('%Y-%m', o.order_date) AS month,
+    COUNT(o.order_id) AS order_count,
+    SUM(o.amount_inr) AS total_revenue,
+    AVG(o.amount_inr) AS avg_revenue
+FROM orders o
+INNER JOIN products p
+    ON o.product_id = p.product_id
+WHERE o.status = 'Delivered'
+GROUP BY p.category, strftime('%Y-%m', o.order_date)
+ORDER BY p.category, month;
+
+
+-- 3. Category targets and variance
+WITH category_revenue AS (
+    SELECT
+        p.category,
+        SUM(o.amount_inr) AS total_revenue
+    FROM orders o
+    INNER JOIN products p
+        ON o.product_id = p.product_id
+    WHERE o.status = 'Delivered'
+    GROUP BY p.category
+)
+SELECT
+    cr.category,
+    cr.total_revenue,
+    ct.target_revenue_inr,
+    ct.target_revenue_inr - cr.total_revenue AS variance,
+    ((cr.total_revenue - ct.target_revenue_inr) * 100.0)
+        / ct.target_revenue_inr AS percentage_variance,
+    CASE
+        WHEN cr.total_revenue >= ct.target_revenue_inr
+            THEN 'Above Target'
+        WHEN ((ct.target_revenue_inr - cr.total_revenue) * 100.0
+              / ct.target_revenue_inr) <= 15
+            THEN 'Below Target - Watch'
+        ELSE 'Below Target - Critical'
+    END AS target_status
+FROM category_revenue cr
+INNER JOIN category_targets ct
+    ON cr.category = ct.category
+ORDER BY cr.total_revenue DESC;
